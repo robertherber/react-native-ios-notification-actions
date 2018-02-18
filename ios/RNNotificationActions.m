@@ -153,15 +153,15 @@ RCT_EXPORT_METHOD(callCompletionHandler)
 // Handle notifications received by the app delegate and passed to the following class methods
 + (void)application:(UIApplication *)application handleActionWithIdentifier:(NSString *)identifier forLocalNotification:(UILocalNotification *)notification withResponseInfo:(NSDictionary *)responseInfo completionHandler:(void (^)())completionHandler;
 {
-    [self emitNotificationActionForIdentifier:identifier source:@"local" responseInfo:responseInfo userInfo:notification.userInfo completionHandler:completionHandler];
+    [self emitNotificationActionForIdentifier:identifier source:@"local" responseInfo:responseInfo fireDate:notification.fireDate userInfo:notification.userInfo completionHandler:completionHandler];
 }
 
 + (void)application:(UIApplication *)application handleActionWithIdentifier:(NSString *)identifier forRemoteNotification:(NSDictionary *)userInfo withResponseInfo:(NSDictionary *)responseInfo completionHandler:(void (^)())completionHandler
 {
-    [self emitNotificationActionForIdentifier:identifier source:@"remote" responseInfo:responseInfo userInfo:userInfo completionHandler:completionHandler];
+    [self emitNotificationActionForIdentifier:identifier source:@"remote" responseInfo:responseInfo fireDate:nil userInfo:userInfo completionHandler:completionHandler];
 }
 
-+ (void)emitNotificationActionForIdentifier:(NSString *)identifier source:(NSString *)source responseInfo:(NSDictionary *)responseInfo userInfo:(NSDictionary *)userInfo completionHandler:(void (^)())completionHandler
++ (void)emitNotificationActionForIdentifier:(NSString *)identifier source:(NSString *)source responseInfo:(NSDictionary *)responseInfo fireDate:(NSDate*)fireDate userInfo:(NSDictionary *)userInfo completionHandler:(void (^)())completionHandler
 {
     NSMutableDictionary *info = [[NSMutableDictionary alloc] initWithDictionary:@{
                                                                                   @"identifier": identifier,
@@ -172,6 +172,13 @@ RCT_EXPORT_METHOD(callCompletionHandler)
     NSString *text = [responseInfo objectForKey:UIUserNotificationActionResponseTypedTextKey];
     if (text != NULL) {
         info[@"text"] = text;
+    }
+    // Add fireDate if present
+    if (fireDate != NULL) {
+        NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+        [formatter setDateFormat: @"yyyy-MM-dd HH:mm:ss zzz"]; 
+        NSString *stringFromDate = [formatter stringFromDate:fireDate];
+        info[@"fireDate"] = stringFromDate;
     }
     // Add userinfo if present
     if (userInfo != NULL) {
